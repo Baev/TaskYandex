@@ -2,12 +2,10 @@ package tester;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.Select;
 
-import java.io.PrintWriter;
 import java.util.*;
 
 public class Instructions {
@@ -105,7 +103,7 @@ public class Instructions {
         List<WebElement> input = element.findElements(By.tagName("input"));
         for (WebElement e : input) {
             String type = e.getAttribute("type");
-            if (!badTypes.contains(type)) {
+            if (!badTypes.contains(type) && e.isEnabled() && e.isDisplayed()) {
                 List<Action> tmp = new LinkedList<Action>();
                 tmp.add(new Action(ActionType.TYPE_TO_BOX, e));
                 result.add(tmp);
@@ -162,104 +160,81 @@ public class Instructions {
     }
 
     public void findLinks(WebDriver driver) {
-        try {
-            List<WebElement> tmp = driver.findElements(By.tagName("a"));
-            List<WebElement> elements = new LinkedList<WebElement>();
-            for (WebElement w : tmp) {
-                if (w.isEnabled() && w.isDisplayed()) {
-                    elements.add(w);
-                    visibleLinks.add(w);
-                }
+        List<WebElement> tmp = driver.findElements(By.tagName("a"));
+        List<WebElement> elements = new LinkedList<WebElement>();
+        for (WebElement w : tmp) {
+            if (w.isEnabled() && w.isDisplayed()) {
+                elements.add(w);
+                visibleLinks.add(w);
             }
+        }
 
-            for (WebElement w : elements) {
-                if (w.isEnabled() && w.isDisplayed()) {
-                    try {
-                        WebElement webElement = w.findElement(By.xpath(".."));
-                        Instruction instruction = new Instruction();
+        for (WebElement w : elements) {
+            if (w.isEnabled() && w.isDisplayed()) {
+                WebElement webElement = w.findElement(By.xpath(".."));
+                Instruction instruction = new Instruction();
 
-                        List<WebElement> list = webElement.findElements(By.xpath("//li"));
+                List<WebElement> list = webElement.findElements(By.xpath("descendant::li"));
 
-                        if (list.size() > 0) {
-                            try {
-                                processLink(webElement, instruction, new Actions(driver), true);
-                                continue;
-                            } catch (WebDriverException e) {
-                                System.out.print(e.getMessage());
-                            }
-
-                            if (!usedLinks.contains(w) && w.getText().length() > 0) {
-                                usedLinks.add(w);
-                                instruction.add(new Action(ActionType.CLICK_TO_LINK, w));
-                                instructions.add(instruction);
-                            }
-
-                        }
-                    } catch (WebDriverException e) {
-                        System.out.print(e.getMessage());
+                if (list.size() > 0) {
+                    processLink(webElement, instruction, new Actions(driver), true);
+                    continue;
+                } else {
+                    if (!usedLinks.contains(w) && w.getText().length() > 0) {
+                        usedLinks.add(w);
+                        instruction.add(new Action(ActionType.CLICK_TO_LINK, w));
+                        instructions.add(instruction);
                     }
+
                 }
             }
-        } catch (WebDriverException e) {
-            System.out.print(e.getMessage());
-            throw new LinkFinderException();
-
         }
     }
 
-    private void processLink(WebElement element, Instruction instruction, Actions actions, boolean f) throws LinkFinderException {
-        try {
-            if (f) {
-                List<WebElement> a = element.findElements(By.xpath("a"));
+    private void processLink(WebElement element, Instruction instruction, Actions actions, boolean f) {
+        if (f) {
+            List<WebElement> a = element.findElements(By.xpath("a"));
 
-                for (WebElement w : a) {
-                    if (usedLinks.contains(w)) {
+            for (WebElement w : a) {
+                if (usedLinks.contains(w)) {
+                    continue;
+                }
+                if (w.isEnabled() && w.isDisplayed()) {
+                    usedLinks.add(w);
+                    actions.moveToElement(w).perform();
+
+                    if (w.getText().length() == 0) {
                         continue;
                     }
-                    if (w.isEnabled() && w.isDisplayed()) {
-                        usedLinks.add(w);
-                        try {
-                            actions.moveToElement(w).perform();
-                        } catch (WebDriverException e) {
-                            continue;
-                        }
 
-                        if (w.getText().length() == 0) {
-                            continue;
-                        }
+                    Action action2 = new Action(ActionType.CLICK_TO_LINK, w);
 
-                        Action action2 = new Action(ActionType.CLICK_TO_LINK, w);
-
-                        Instruction tmp = new Instruction();
-                        if (!visibleLinks.contains(w)) {
-                            tmp = new Instruction(instruction);
-                        }
-
-                        tmp.add(action2);
-                        instructions.add(tmp);
-
-                        Action action1 = new Action(ActionType.CLICK_TO_LINK, w);
-                        instruction.add(action1);
-
+                    Instruction tmp = new Instruction();
+                    if (!visibleLinks.contains(w)) {
+                        tmp = new Instruction(instruction);
                     }
-                }
-            }
 
-            List<WebElement> elements1 = element.findElements(By.xpath("*"));
-            for (WebElement w : elements1) {
-                if (w.getTagName().equals("ul") || w.getTagName().equals("ol") || w.getTagName().equals("li")) {
-                    processLink(w, new Instruction(instruction), actions, !f);
+                    tmp.add(action2);
+                    instructions.add(tmp);
+
+                    Action action1 = new Action(ActionType.MOVE_MOUSE_TO, w);
+                    instruction.add(action1);
+
                 }
             }
-        } catch (WebDriverException e) {
-            System.out.print(e.getMessage());
-            throw new LinkFinderException();
+        }
+
+        List<WebElement> elements1 = element.findElements(By.xpath("*"));
+        for (WebElement w : elements1) {
+            if (w.getTagName().equals("ul") || w.getTagName().equals("ol") || w.getTagName().equals("li")) {
+                processLink(w, new Instruction(instruction), actions, !f);
+            }
         }
     }
 
-    public void write(PrintWriter pw) {
+    public void write() {
         for (Instruction i : instructions) {
-            pw.println(i.toString());
+            System.out.println(i.toString());
         }
     }
 
@@ -268,16 +243,16 @@ public class Instructions {
     }
 
     public void findImages(WebDriver driver) {
-
-        List<WebElement> elements = driver.findElements(By.xpath("//a//img"));
-        for (WebElement w : elements) {
-            if (!usedLinks.contains(w) && w.isEnabled() && w.isDisplayed()) {
-                Instruction instruction = new Instruction();
-                instruction.add(new Action(ActionType.CLICK_TO_IMAGE, w));
-                instructions.add(instruction);
+        List<WebElement> webElements = driver.findElements(By.tagName("a"));
+        for (WebElement w : webElements) {
+            List<WebElement> elements = w.findElements(By.xpath("descendant::img"));
+            for (WebElement e : elements) {
+                if (!usedLinks.contains(w) && e.isEnabled() && e.isDisplayed()) {
+                    Instruction instruction = new Instruction();
+                    instruction.add(new Action(ActionType.CLICK_TO_IMAGE, e));
+                    instructions.add(instruction);
+                }
             }
         }
-
-
     }
 }

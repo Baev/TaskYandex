@@ -1,33 +1,50 @@
 package tester;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.util.Scanner;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.chrome.ChromeDriver;
 
 public class Main {
 
     public static void main(String[] args) {
-        try {
-            File file = new File("input.txt");
-            Scanner reader = new Scanner(file);
-            try {
-                PrintWriter writer = new PrintWriter("output.txt");
-                try {
-
-
-                    String url = reader.next();
-                    Tester tester = new Tester();
-                    tester.run(url, writer);
-
-                } finally {
-                    writer.close();
-                }
-            } finally {
-                reader.close();
-            }
-        } catch (FileNotFoundException e) {
-            System.out.print(e.getMessage());
+        if (args.length < 2) {
+            System.out.println("you need to write two arguments:");
+            System.out.println("1) path to chromedriver.exe");
+            System.out.println("2) url to testing");
+            return;
         }
+
+
+        java.util.logging.Logger.getLogger("org.apache.http.impl.client").setLevel(java.util.logging.Level.WARNING);
+
+        System.setProperty("webdriver.chrome.driver", args[0]);
+        String url = args[1];
+
+        try {
+            WebDriver driver = new ChromeDriver();
+            try {
+                driver.get(url);
+                Instructions result = new Instructions();
+
+                result.findLinks(driver);
+                result.findImages(driver);
+                result.findForms(driver);
+
+                result.write();
+
+
+                driver.quit();
+
+
+            } catch (WebDriverException e) {
+                e.getMessage();
+            } finally {
+                driver.quit();
+            }
+        } catch (WebDriverException e) {
+            e.getMessage();
+        }
+
+
     }
 }

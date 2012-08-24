@@ -4,116 +4,62 @@ import org.openqa.selenium.WebElement;
 
 
 public class Action {
-    private Integer type;
+    private static String defButtonName = "Отправить";
+    private static int imageNum = 1;
+    private static int boxNum = 1;
+    private ActionType type;
     private String text;
-    private String tagName;
-    private String link;
-    private String value;
-    private String name;
-    private static int[] num = {1, 1, 1, 1, 1, 1, 1};
 
     public Action(ActionType actionType, WebElement w) {
-        int i = actionType.getId();
-        if (i == ActionType.CLICK_TO_IMAGE.getId()) {
-            text = w.getAttribute("alt");
-            if (text == null || text.length() == 0) {
-                text = w.getAttribute("title");
-            }
-        } else {
-            this.text = w.getText();
-        }
-        this.link = w.getAttribute("href");
-        this.tagName = w.getTagName();
-        this.type = i;
-        this.name = w.getAttribute("name");
-        this.value = w.getAttribute("value");
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    private void updateText() {
-
-        if (!ifString(text)) {
-            if (ifString(value)) {
-                text = value;
-            } else {
-                if (ifString(name)) {
-                    text = name;
-                } else {
-                    text = typeToString(type) + String.valueOf(num[type]++);
+        type = actionType;
+        switch (type.getId()) {
+            case 1:
+                text = "move mouse to \"" + w.getText() + "\"";
+                break;
+            case 2:
+                text = "click to link \"" + w.getText() + "\"";
+                break;
+            case 3:
+                String buttonName = w.getAttribute("value");
+                if (buttonName == null || buttonName.length() == 0) {
+                    buttonName = defButtonName;
                 }
-            }
+                text = "click to button \"" + buttonName + "\"";
+                break;
+            case 4:
+                String imageName = w.getAttribute("alt");
+                if (imageName == null || imageName.length() == 0) {
+                    imageName = w.getAttribute("title");
+                    if (imageName == null || imageName.length() == 0) {
+                        imageName = "Image" + Integer.toString(imageNum++);
+                    }
+                }
+                text = "click to image \"" + imageName + "\"";
+                break;
+            case 5:
+                String boxName = w.getAttribute("value");
+                if (boxName == null || boxName.length() == 0) {
+                    boxName = w.getAttribute("name");
+                    if (boxName == null || boxName.length() == 0) {
+                        boxName = "TextBox" + Integer.toString(boxNum++);
+                    }
+                    text = "type to box \"" + boxName + "\" some text";
+                }
+                break;
+            case 6:
+                String optionName = w.getText();
+                text = "select option \"" + optionName + "\" in select element";
+                break;
+            case 7:
+                String radioName = w.getAttribute("name");
+                text = "switch on \"" + radioName + "\"";
+                break;
         }
-    }
 
-    private boolean ifString(String s) {
-        return (s != null && s.length() > 0);
-    }
-
-    public String getLink() {
-        return link;
-    }
-
-    public String getTagName() {
-
-        return tagName;
-    }
-
-    public Integer getType() {
-        return type;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    private String typeToString(int type) {
-        switch (type) {
-                   case 0:
-                       return "Enter";
-                   case 1:
-                       return "mouse";
-                   case 2:
-                       return "link";
-                   case 3:
-                       return "button";
-                   case 4:
-                       return "image";
-                   case 5:
-                       return "box";
-                   case 6:
-                       return "option";
-                   case 7:
-                       return "radio";
-                   default:
-                       return "default ";
-               }
     }
 
     @Override
     public String toString() {
-        updateText();
-        String newText = "\"" + text + "\"";
-
-        if (type == 0) {
-            return "press " + typeToString(type);
-        }
-        if (type == 1) {
-            return "move " + typeToString(type) + " to " + newText;
-        }
-        if (type == 5) {
-            return "type to " + typeToString(type) + " " + newText + " some text";
-        }
-        if (type == 6) {
-            return "select " + typeToString(type) + " " + newText;
-        }
-
-        return "click to " + typeToString(type) + " " + newText;
+        return text;
     }
 }
