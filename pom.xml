@@ -7,7 +7,24 @@
     <version>1.0</version>
     <packaging>jar</packaging>
 
+
     <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>tester.Main</mainClass>
+                            <packageName>tester</packageName>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+
+
         <directory>target</directory>
         <sourceDirectory>src</sourceDirectory>
     </build>
@@ -24,5 +41,6 @@
             <version>RELEASE</version>
         </dependency>
     </dependencies>
+
 
 </project>
