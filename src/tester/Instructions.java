@@ -247,7 +247,9 @@ public class Instructions {
         for (WebElement w : webElements) {
             List<WebElement> elements = w.findElements(By.xpath("descendant::img"));
             for (WebElement e : elements) {
-                if (!usedLinks.contains(w) && e.isEnabled() && e.isDisplayed()) {
+                if (!usedLinks.contains(w) && e.isEnabled() && e.isDisplayed() && !usedLinks.contains(e)) {
+                    usedLinks.add(w);
+                    usedLinks.add(e);
                     Instruction instruction = new Instruction();
                     instruction.add(new Action(ActionType.CLICK_TO_IMAGE, e));
                     instructions.add(instruction);
